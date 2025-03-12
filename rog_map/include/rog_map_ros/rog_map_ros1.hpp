@@ -44,11 +44,16 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <super_utils/color_msg_utils.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <pcl_ros/transforms.h>
+#include <pcl_conversions/pcl_conversions.h>
 namespace rog_map {
     using namespace super_utils;
 
     class ROGMapROS :public ROGMap {
         ros::NodeHandle nh_;
+        tf::TransformListener tf_listener_;  // Add this as a private class member
 
         const double getSystemWalltimeNow() override {
             return ros::Time::now().toSec();
@@ -103,15 +108,37 @@ namespace rog_map {
                 std::cout << YELLOW << " -- [ROS] Odom timeout, skip cloud callback." << RESET << std::endl;
                 return;
             }
+
+            // Get transformation from LiDAR frame to world frame
+            std::string target_frame = "world";  // Adjust as needed
+            std::string source_frame = cloud_msg->header.frame_id;
+
+            tf::StampedTransform transform;
+            try {
+                tf_listener_.waitForTransform(target_frame, source_frame, cloud_msg->header.stamp, ros::Duration(0.1));
+                tf_listener_.lookupTransform(target_frame, source_frame, cloud_msg->header.stamp, transform);
+            } catch (tf::TransformException &ex) {
+                ROS_WARN("TF Error: %s", ex.what());
+                return;
+            }
+
+            // Transform point cloud to world frame
+            sensor_msgs::PointCloud2 cloud_transformed;
+            pcl_ros::transformPointCloud(target_frame, transform, *cloud_msg, cloud_transformed);
+
+            // Convert to PCL format
             PointCloud tmp_pc;
-            pcl::fromROSMsg(*cloud_msg, tmp_pc);
+            pcl::fromROSMsg(cloud_transformed, tmp_pc);
+
+            // Store the transformed point cloud
             rc_.updete_lock.lock();
             rc_.pc = tmp_pc;
             rc_.pc_pose = std::make_pair(robot_state_.p, robot_state_.q);
             rc_.unfinished_frame_cnt++;
             map_empty_ = false;
             rc_.updete_lock.unlock();
-        }
+        }   
+
 
         void updateCallback(const ros::TimerEvent& event) {
             if (map_empty_) {
