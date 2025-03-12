@@ -136,7 +136,7 @@ rog_map:
   #  else user should call function [updateMap] to update the map.
   ros_callback:
     enable: true
-    cloud_topic: "/cloud_registered"
+    cloud_topic: "/livox/lidar"
     odom_topic: "/lidar_slam/odom"
     odom_timeout: 2.0
 
@@ -165,7 +165,7 @@ rog_map:
   raycasting:
     # if disable, the map will only maintain occupied information, and all other grid
     # will be considered as unknown.
-    enable: false
+    enable: true
     batch_update_size: 1
     local_update_box: [ 100,100,5 ]
     # The range of raycasting [m].
