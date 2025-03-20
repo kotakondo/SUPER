@@ -9,5 +9,5 @@ windows:
     panes:
       - roscore
       - roslaunch --wait acl_sim start_world.launch
-      - roslaunch --wait acl_sim perfect_tracker_and_sim.launch x:=0.0 y:=0.0 z:=1.0 yaw:=0.0
+      - roslaunch --wait acl_sim perfect_tracker_and_sim.launch x:=0.0 y:=0.0 z:=3.0 yaw:=0.0
       - roslaunch --wait mission_planner click_demo.launch
