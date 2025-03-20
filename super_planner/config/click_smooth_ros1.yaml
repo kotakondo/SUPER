@@ -40,9 +40,9 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    max_vel: 5.0
-    max_acc: 5.0
-    max_jerk: 120.0
+    max_vel: 10.0
+    max_acc: 20.0
+    max_jerk: 30.0
     max_omg: 2.5
     max_acc_thr: 20.0
     min_acc_thr: 6.0
@@ -105,19 +105,19 @@ astar:
 
 
 rog_map:
-  resolution: 0.1
+  resolution: 0.2
   inflation_resolution: 0.2
   inflation_step: 2
   unk_inflation_en: false
   unk_inflation_step: 1
-  map_size: [ 50,50,6 ]
+  map_size: [ 100,20,3 ]
   # If the map rolling is disable, the map origin [m] should be set.
-  fix_map_origin: [ 0,0,1.5 ]
+  fix_map_origin: [ 0,0,2.5 ]
   frontier_extraction_en: false
 
   # Virtual ceil and ground
-  virtual_ceil_height: 3.5
-  virtual_ground_height: -0.1
+  virtual_ceil_height: 4.0
+  virtual_ground_height: 1.0
 
   load_pcd_en: false
 
