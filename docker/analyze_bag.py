@@ -32,10 +32,11 @@ def process_bag(bag_file, tol=0.5):
     It reads /goal and /planning/pos_cmd topics.
     Returns a dictionary with:
       - travel_time (float)
-      - pos_cmd_times (list of times)
-      - velocities (list of float)
-      - accelerations (list of float)
-      - jerks (list of float)
+      - path_length (float) : total path length (m) computed from consecutive positions
+      - pos_cmd_times (np.array of times)
+      - velocities (np.array of float)
+      - accelerations (np.array of float)
+      - jerks (np.array of float)
       - vel_violations, acc_violations, jerk_violations (int counts)
     Returns None if travel time could not be computed.
     """
@@ -48,6 +49,7 @@ def process_bag(bag_file, tol=0.5):
     velocities = []
     accelerations = []
     jerks = []
+    positions = []  # List to record positions for path length computation
 
     # Dynamic constraints
     v_constraint = 10.0    # m/s
@@ -71,6 +73,10 @@ def process_bag(bag_file, tol=0.5):
                 continue
 
             pos_cmd_times.append(pos_time)
+            # Record the current commanded position.
+            pos = (msg.position.x, msg.position.y, msg.position.z)
+            positions.append(pos)
+
             # Compute norms of the command vectors.
             vel = np.linalg.norm([msg.velocity.x, msg.velocity.y, msg.velocity.z])
             acc = np.linalg.norm([msg.acceleration.x, msg.acceleration.y, msg.acceleration.z])
@@ -87,7 +93,6 @@ def process_bag(bag_file, tol=0.5):
                 jerk_violations += 1
 
             # Check if goal is reached.
-            pos = (msg.position.x, msg.position.y, msg.position.z)
             if compute_distance(pos, goal_position) <= tol:
                 travel_end_time = pos_time
                 print("  Goal reached at time {:.3f}".format(travel_end_time))
@@ -100,8 +105,16 @@ def process_bag(bag_file, tol=0.5):
         return None
 
     travel_time = travel_end_time - goal_time
+
+    # Compute total path length (sum of distances between consecutive positions).
+    path_length = 0.0
+    if len(positions) >= 2:
+        for i in range(len(positions) - 1):
+            path_length += compute_distance(positions[i], positions[i+1])
+
     result = {
         "travel_time": travel_time,
+        "path_length": path_length,
         "pos_cmd_times": np.array(pos_cmd_times),
         "velocities": np.array(velocities),
         "accelerations": np.array(accelerations),
@@ -189,6 +202,7 @@ def main():
     bag_files = sorted(bag_files, key=lambda f: extract_number(os.path.basename(f)))
 
     overall_travel_times = []
+    overall_path_lengths = []
     overall_vel_violations = 0
     overall_acc_violations = 0
     overall_jerk_violations = 0
@@ -205,12 +219,14 @@ def main():
 
         processed_count += 1
         overall_travel_times.append(result["travel_time"])
+        overall_path_lengths.append(result["path_length"])
         overall_vel_violations += result["vel_violations"]
         overall_acc_violations += result["acc_violations"]
         overall_jerk_violations += result["jerk_violations"]
 
         stats_lines.append(f"{os.path.basename(bag_file)}:\n")
         stats_lines.append(f"  Travel time: {result['travel_time']:.3f} s\n")
+        stats_lines.append(f"  Path length: {result['path_length']:.3f} m\n")
         stats_lines.append(f"  Velocity violations (>10 m/s): {result['vel_violations']}\n")
         stats_lines.append(f"  Acceleration violations (>20 m/s²): {result['acc_violations']}\n")
         stats_lines.append(f"  Jerk violations (>30 m/s³): {result['jerk_violations']}\n\n")
@@ -220,9 +236,11 @@ def main():
 
     if processed_count > 0:
         avg_travel_time = np.mean(overall_travel_times)
+        avg_path_length = np.mean(overall_path_lengths)
         stats_lines.append("Overall Statistics:\n")
         stats_lines.append(f"  Processed bag files: {processed_count}\n")
         stats_lines.append(f"  Average travel time: {avg_travel_time:.3f} s\n")
+        stats_lines.append(f"  Average path length: {avg_path_length:.3f} m\n")
         stats_lines.append(f"  Total velocity violations: {overall_vel_violations}\n")
         stats_lines.append(f"  Total acceleration violations: {overall_acc_violations}\n")
         stats_lines.append(f"  Total jerk violations: {overall_jerk_violations}\n")
