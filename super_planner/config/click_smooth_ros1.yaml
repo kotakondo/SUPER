@@ -1,7 +1,7 @@
 fsm:
   click_goal_en: true
   click_goal_topic: "/goal"
-  click_height: 1.5
+  click_height: 3.0
   click_yaw_en: true
   replan_rate: 15.0
   cmd_topic: "/planning/pos_cmd"
@@ -36,7 +36,7 @@ super_planner:
 
 traj_opt:
   switch:
-    save_log_en: false
+    save_log_en: true
     print_optimizer_log: false
 
   boundary:
@@ -96,7 +96,7 @@ traj_opt:
 
 
 astar:
-  map_voxel_num: [ 500, 500, 100 ]
+  map_voxel_num: [ 500, 500, 500 ]
   visual_process: false
   allow_diag: true
   # 0 DIAG; 1 MANHATTAN; 2 EUCLIDEAN
@@ -112,7 +112,7 @@ rog_map:
   unk_inflation_step: 1
   map_size: [ 100,100,6 ]
   # If the map rolling is disable, the map origin [m] should be set.
-  fix_map_origin: [ 0,0,1.5 ]
+  fix_map_origin: [ 0,0,0 ]
   frontier_extraction_en: false
 
   # Virtual ceil and ground
@@ -169,7 +169,7 @@ rog_map:
     batch_update_size: 1
     local_update_box: [ 100,100,5 ]
     # The range of raycasting [m].
-    ray_range: [0.5, 100 ]
+    ray_range: [0.5, 10 ]
 
     p_min: 0.12
     p_miss: 0.49
