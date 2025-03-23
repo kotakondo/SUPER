@@ -40,12 +40,12 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    max_vel: 10.0
-    max_acc: 20.0
+    max_vel: 2.0
+    max_acc: 5.0
     max_jerk: 30.0
     max_omg: 2.5
-    max_acc_thr: 20.0
-    min_acc_thr: 6.0
+    max_acc_thr: 5.0
+    min_acc_thr: 0.0
     penna_margin: 0.05
 
   exp_traj:
@@ -105,7 +105,7 @@ astar:
 
 
 rog_map:
-  resolution: 0.2
+  resolution: 0.1
   inflation_resolution: 0.2
   inflation_step: 2
   unk_inflation_en: false
