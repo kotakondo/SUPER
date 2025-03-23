@@ -47,6 +47,7 @@ namespace fsm {
         rog_map::ROGMapROS::Ptr map_ptr_;
         quadrotor_msgs::PositionCommand latest_cmd;
         nav_msgs::Path path;
+        int simulation_number_{20};
 
         vector<quadrotor_msgs::PositionCommand> cmd_logs_;
 
@@ -302,7 +303,10 @@ namespace fsm {
                                                 this); // 10Hz
             }
 
-            write_time_.open(DEBUG_FILE_DIR("time_consuming.csv"), std::ios::out | std::ios::trunc);
+            // Get simulation number for data saving
+            nh.param("simulation_number", simulation_number_, 20);
+            std::cout << "simulation_number: " << simulation_number_ << std::endl;
+            write_time_.open("/home/kota/data/time_consuming_num_" + std::to_string(simulation_number_) + ".csv", std::ios::out | std::ios::trunc);
             log_module_time.resize(9);
             for (int i = 0; i < 9; i++) {
                 write_time_ << log_time_str[i];
@@ -321,6 +325,7 @@ namespace fsm {
             pid_cmd_.kv[0] = 3.4;
             pid_cmd_.kv[1] = 3.4;
             pid_cmd_.kv[2] = 4.0;
+
         }
 
         void pubCmdTimerCallback(const ros::TimerEvent &event) {
