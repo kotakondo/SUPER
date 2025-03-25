@@ -37,7 +37,7 @@ class SimulationMonitor:
             msg.position.y,
             msg.position.z
         )
-        rospy.loginfo("Current position: {}".format(self.current_pose))
+        # rospy.loginfo("Current position: {}".format(self.current_pose))
 
     def reached_goal(self):
         if self.current_pose is None:
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # Prepare the CSV log file.
     if not os.path.exists(CSV_PATH):
         with open(CSV_PATH, "w") as f:
-            f.write("sim_num,status,travel_time_seconds\n")
+            f.write("sim_num,status\n")
 
     rospy.init_node("simulation_monitor_super", anonymous=True)
 
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
         # Log the simulation result.
         with open(CSV_PATH, "a") as csv_file:
-            csv_file.write(f"{sim_num},{status},{travel_time:.1f}\n")
+            csv_file.write(f"{sim_num},{status}\n")
 
         # Terminate all simulation processes (note: roscore is assumed to run externally).
         kill_processes(processes)
