@@ -48,7 +48,7 @@ RUN sudo apt-get install -y libignition-math4-dev
 RUN sudo apt install -y cmake
                             
 RUN ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
-RUN python3 -m pip install pyquaternion
+RUN python3 -m pip install pyquaternion pandas matplotlib
 
 # Set up SUPER workspace
 RUN mkdir -p /home/kota/super_ws/src
@@ -100,6 +100,12 @@ RUN git clone https://github.com/fratopa/Mid360_simulation_plugin.git
 WORKDIR /home/kota/mid360_ws
 RUN bash -c "source /opt/ros/noetic/setup.bash && source /home/kota/super_ws/devel/setup.bash && catkin_make -DBUILD_TYPE=Release"
 
+# Reset the working directory
+WORKDIR /home/kota/super_ws
+
+# Create a directory for data
+RUN mkdir -p /home/kota/data
+
 # Set up bashrc
 RUN echo "source /home/kota/super_ws/devel/setup.bash" >> ~/.bashrc
 
@@ -122,9 +128,12 @@ RUN echo "alias cb='roscd && catkin build && sb'" >> ~/.bashrc
 RUN echo "alias ss='roscd && source devel/setup.bash'" >> ~/.bashrc
 RUN echo "alias cbf='clear && roscd && catkin build && ss'" >> ~/.bashrc
 
+# environment variables
+RUN echo "export DISABLE_ROS1_EOL_WARNINGS=1" >> ~/.bashrc
+
 # Set up Entry Point
 # ##########################################
 COPY ./super_sim.yml /
 RUN chmod +x /super_sim.yml
-ENTRYPOINT ["tmuxp", "load", "/super_sim.yml"]
+# ENTRYPOINT ["tmuxp", "load", "/super_sim.yml"]
 
