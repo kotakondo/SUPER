@@ -94,7 +94,7 @@ def main():
         results.append((os.path.basename(bag_file), status, collided_obstacle, penetration))
 
     # Write results to collision_check.csv.
-    output_csv = "collision_check.csv"
+    output_csv = "/home/kota/data/collision_check.csv"
     with open(output_csv, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["bag_file", "collision_status", "collided_obstacle", "penetration"])

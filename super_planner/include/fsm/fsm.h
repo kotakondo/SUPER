@@ -47,7 +47,9 @@ namespace fsm {
                 "TIME_STAMPE", "EPX_TRAJ_FRONTEND",
                 "EXP_TRAJ_OPT", "GENERATE_EXP_TRAJ",
                 "BACK_TRAJ_FRONTEND", "BACK_TRAJ_OPT",
-                "GENERATE_BACK_TRAJ", "TOTAL_REPLAN", "VISUALIZATION"
+                "GENERATE_BACK_TRAJ", "TOTAL_REPLAN",
+                "VISUALIZATION", "EPX_TRAJ_GLOBAL",
+                "EXP_TRAJ_INIT", "EXP_SUCCESS"
         };
         Config cfg_;
         // map, checker, planner

@@ -35,7 +35,10 @@ namespace super_planner {
         BACK_TRAJ_OPT,
         GENERATE_BACK_TRAJ,
         TOTAL_REPLAN,
-        VISUALIZATION
+        VISUALIZATION,
+        EPX_TRAJ_GLOBAL,
+        EXP_TRAJ_INIT,
+        EXP_SUCCESS,
     };
 
     static vector<string> log_time_str
@@ -47,7 +50,10 @@ namespace super_planner {
                     " BACK_TRAJ_OPT",
                     " GENERATE_BACK_TRAJ",
                     " TOTAL_REPLAN",
-                    " VISUALIZATION"
+                    " VISUALIZATION",
+                    " EPX_TRAJ_GLOBAL",
+                    " EXP_TRAJ_INIT",
+                    " EXP_SUCCESS"
             };
 
     class LogOneReplan {
@@ -84,8 +90,7 @@ namespace super_planner {
         int ret_code{SUPPER_UNDEFINED};
 
         // comp_t
-        double mapping_t{0.0}, astar_t{0.0}, exp_sfc_t{0.0}, exp_opt_t{0.0}, backup_sfc_t{0.0}, backup_opt_t{0.0},
-                total_t{0.0}, viz_t{0.0};
+        double mapping_t{0.0}, astar_t{0.0}, exp_sfc_t{0.0}, exp_opt_t{0.0}, backup_sfc_t{0.0}, backup_opt_t{0.0}, total_t{0.0}, viz_t{0.0}, exp_init_t{0.0}, exp_success_t{0.0};
 
     public:
         void print() {
@@ -135,6 +140,8 @@ namespace super_planner {
             backup_opt_t = 0.0;
             total_t = 0.0;
             viz_t = 0.0;
+            exp_init_t = 0.0;
+            exp_success_t = 0.0;
             ret_code = SUPER_RET_CODE::SUPPER_UNDEFINED;
             exp_traj.clear();
             exp_yaw_traj.clear();
@@ -213,6 +220,8 @@ namespace super_planner {
             exp_opt_t = comp_times[LogTime::EXP_TRAJ_OPT];
             backup_opt_t = comp_times[LogTime::BACK_TRAJ_OPT];
             viz_t = comp_times[LogTime::VISUALIZATION];
+            exp_init_t = comp_times[LogTime::EXP_TRAJ_INIT];
+            exp_success_t = comp_times[LogTime::EXP_SUCCESS];
             total_t = astar_t + exp_opt_t + backup_opt_t + viz_t;
         }
 

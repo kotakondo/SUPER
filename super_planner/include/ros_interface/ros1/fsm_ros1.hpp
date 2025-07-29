@@ -201,7 +201,7 @@ namespace fsm {
 
 
             fmt::print("Total replan num: {}, total length: {}, average computation time: {} ms\n",
-                       total_replan_num, total_length, average_compt_t / (total_replan_num==0?1:total_replan_num) * 1000);
+                       total_replan_num, total_length, average_compt_t / (total_replan_num==0?1:total_replan_num) * 1000000.0);
 
 
             const std::string save_path = name.empty()
@@ -307,10 +307,10 @@ namespace fsm {
             nh.param("simulation_number", simulation_number_, 20);
             std::cout << "simulation_number: " << simulation_number_ << std::endl;
             write_time_.open("/home/kota/data/time_consuming_num_" + std::to_string(simulation_number_) + ".csv", std::ios::out | std::ios::trunc);
-            log_module_time.resize(9);
-            for (int i = 0; i < 9; i++) {
+            log_module_time.resize(12);
+            for (int i = 0; i < 12; i++) {
                 write_time_ << log_time_str[i];
-                if (i != 8) {
+                if (i != 11) {
                     write_time_ << ",";
                 }
             }

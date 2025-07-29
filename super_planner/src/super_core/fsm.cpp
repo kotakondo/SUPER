@@ -34,9 +34,11 @@ namespace fsm {
     void Fsm::WriteTimeToLog() {
         write_time_ << (ros_ptr_->getSimTime() - system_start_time_) << ", ";
         for (long unsigned int i = 0; i < log_module_time.size(); i++) {
-            write_time_ << log_module_time[i];
+            
             if (i != log_module_time.size() - 1) {
-                write_time_ << ", ";
+                write_time_ << log_module_time[i] * 1000.0 << ", "; // in ms
+            } else {
+                write_time_ << log_module_time[i]; // the last one is success so no need to multiply by 1000
             }
         }
         write_time_ << endl;
@@ -79,7 +81,7 @@ namespace fsm {
         }
 
         planner_ptr_->getModuleTimeConsuming(log_module_time);
-        log_module_time[log_module_time.size() - 2] = replan_once_time.stop();
+        log_module_time[log_module_time.size() - 5] = replan_once_time.stop();
         // save on log
         replan_logs_.push_back(planner_ptr_->getLatestReplanLog());
         WriteTimeToLog();

@@ -3,7 +3,7 @@ fsm:
   click_goal_topic: "/goal"
   click_height: 3.0
   click_yaw_en: true
-  replan_rate: 15.0
+  replan_rate: 100.0
   cmd_topic: "/planning/pos_cmd"
   mpc_cmd_topic: "/planning_cmd/poly_traj"
   timer_en: true
@@ -24,8 +24,8 @@ super_planner:
   iris_iter_num: 2
   obs_skip_num: 2
   replan_forward_dt: 0.1
-  planning_horizon: 7.0
-  sensing_horizon: -1
+  planning_horizon: 10.0
+  sensing_horizon: 15.0
   receding_dis: 4.0
   robot_r: 0.2
   yaw_dot_max: 3.0
@@ -40,12 +40,12 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    max_vel: 10.0
-    max_acc: 20.0
+    max_vel: 2.0
+    max_acc: 10.0
     max_jerk: 30.0
     max_omg: 2.5
-    max_acc_thr: 20.0
-    min_acc_thr: 6.0
+    max_acc_thr: 30.0
+    min_acc_thr: 0.0
     penna_margin: 0.05
 
   exp_traj:
@@ -110,13 +110,13 @@ rog_map:
   inflation_step: 2
   unk_inflation_en: false
   unk_inflation_step: 1
-  map_size: [ 100,100,6 ]
+  map_size: [ 100,100,10 ]
   # If the map rolling is disable, the map origin [m] should be set.
   fix_map_origin: [ 0,0,0 ]
   frontier_extraction_en: false
 
   # Virtual ceil and ground
-  virtual_ceil_height: 4.0
+  virtual_ceil_height: 6.0
   virtual_ground_height: -0.1
 
   load_pcd_en: false
@@ -130,7 +130,7 @@ rog_map:
     enable: false
     resolution: 0.1
     # The range of esdf around the odom [m].
-    local_update_box: [ 5,5,3 ]
+    local_update_box: [ 50,50,10 ]
 
   # If [enable = true], the ROG-Map will actively take ros topic as input.
   #  else user should call function [updateMap] to update the map.
@@ -150,7 +150,7 @@ rog_map:
     # The frame rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
     frame_rate: 0
     # visualization range along the odom [m].
-    range: [ 15, 15,4 ]
+    range: [ 20, 20, 4 ]
     frame_id: "world"
     pub_unknown_map_en: false
 

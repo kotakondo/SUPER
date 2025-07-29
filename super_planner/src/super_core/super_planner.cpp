@@ -51,8 +51,7 @@ namespace super_planner {
                                                       cfg_.iris_iter_num);
         cg_ptr_->SetLineNeighborList(cfg_.seed_line_neighbour);
 
-
-        time_consuming_.resize(8);
+        time_consuming_.resize(11, 0.0);
 
         robot_state_.rcv = false;
         planner_process_start_WT_ = ros_ptr_->getSimTime();
@@ -110,9 +109,11 @@ namespace super_planner {
         if (exp_ret_code == FAILED) {
             ros_ptr_->warn(" -- [SUPER] in [PlanFromRest] GenerateExpTrajectory failed with {}.",
                            RET_CODE_STR[exp_ret_code].c_str());
+            time_consuming_[EXP_SUCCESS] = 0.0;
             return FAILED;
         } else {
             ros_ptr_->info(" -- [SUPER] in [PlanFromRest] GenerateExpTrajectory SUCCESS.");
+            time_consuming_[EXP_SUCCESS] = 1.0;
         }
 
         back_traj_info.setEmpty();
@@ -183,7 +184,6 @@ namespace super_planner {
             time_consuming_[VISUALIZATION] += t_viz.stop();
         }
 
-
         /// 1) Replan EXP traj
         ExpTraj exp_traj_info;
         TimeConsuming t_exp("t_exp", false);
@@ -192,22 +192,27 @@ namespace super_planner {
 
         if (exp_ret_code == FAILED) {
             ros_ptr_->warn(" -- [SUPER] in [ReplanOnce]: GenerateExpTrajectory failed, force return");
+            time_consuming_[EXP_SUCCESS] = 0.0;
             return FAILED;
         } else if (exp_ret_code == NEW_TRAJ) {
             if (cfg_.print_log) {
                 ros_ptr_->info(" -- [SUPER] in [ReplanOnce]: Last epx traj end, switch to new traj.");
             }
+            time_consuming_[EXP_SUCCESS] = 1.0;
             return NEW_TRAJ;
         } else if (exp_ret_code == EMER) {
             ros_ptr_->warn(" -- [SUPER] in [ReplanOnce]: Replan failed, switch to emer.");
+            time_consuming_[EXP_SUCCESS] = 0.0;
             return EMER;
         } else if (exp_ret_code == SUCCESS) {
             if (cfg_.print_log) {
                 ros_ptr_->info(" -- [SUPER] in [ReplanOnce]: Replan a new exp traj success.");
             }
+            time_consuming_[EXP_SUCCESS] = 1.0;
         } else if (exp_ret_code == NO_NEED) {
             if (cfg_.print_log)
                 ros_ptr_->info(" -- [SUPER] in [ReplanOnce]: No need to replan a new exp traj, use last one.");
+            time_consuming_[EXP_SUCCESS] = -1.0;
         }
 
         {
@@ -638,6 +643,10 @@ namespace super_planner {
 //                        return FAILED;
 //                    }
 //                }
+
+                
+                TimeConsuming t_path_search("t_path_search", false);
+
                 if (!PathSearch(guide_path.back(), gi_.goal_p, temp_horizon, new_path)) {
                     ros_ptr_->warn(" -- [SUPER] PathSearch for new path failed");
                     return FAILED;
@@ -646,6 +655,8 @@ namespace super_planner {
                     ros_ptr_->warn(" -- [SUPER] PathSearch for new path failed");
                     return FAILED;
                 }
+
+                time_consuming_[EPX_TRAJ_GLOBAL] = t_path_search.stop();
 
                 // compute total dis
                 // backward compute dis for all points
@@ -667,6 +678,9 @@ namespace super_planner {
                 vector<double> stamps(new_path.size(), 0);
                 vector<double> dt(new_path.size(), 0);
                 double last_stamp = 0;
+
+                TimeConsuming t_init("t_init", false);
+
                 for (int i = dis.size() - 1; i >= 0; i--) {
                     double vel;
                     geometry_utils::simplePMTimeAllocator(cfg_.exp_traj_cfg.max_acc, cfg_.exp_traj_cfg.max_vel,
@@ -677,6 +691,8 @@ namespace super_planner {
                     last_stamp = stamps[i];
                 }
                 double time_stamp = guide_stamp.back();
+
+                time_consuming_[EXP_TRAJ_INIT] = t_init.stop();
 
 //                for (int i = 0; i < stamps.size(); i++) {
 //                    cout << stamps[i] << " ";
@@ -720,7 +736,6 @@ namespace super_planner {
         }
 
         time_consuming_[EPX_TRAJ_FRONTEND] = t_exp_frontend.stop();
-
 
         pos_fina_state.setZero();
         pos_fina_state.col(0) = guide_path.back();
