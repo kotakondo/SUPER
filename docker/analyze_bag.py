@@ -220,9 +220,9 @@ def main():
         stats_lines.append(f"{os.path.basename(bag_file)}:\n")
         stats_lines.append(f"  Travel time: {result['travel_time']:.3f} s\n")
         stats_lines.append(f"  Path length: {result['path_length']:.3f} m\n")
-        stats_lines.append(f"  Velocity violations (>10 m/s): {result['vel_violations']}\n")
-        stats_lines.append(f"  Acceleration violations (>20 m/s²): {result['acc_violations']}\n")
-        stats_lines.append(f"  Jerk violations (>30 m/s³): {result['jerk_violations']}\n\n")
+        stats_lines.append(f"  Velocity violations (>{v_constraint} m/s): {result['vel_violations']}\n")
+        stats_lines.append(f"  Acceleration violations (>{a_constraint} m/s²): {result['acc_violations']}\n")
+        stats_lines.append(f"  Jerk violations (>{a_constraint} m/s³): {result['jerk_violations']}\n\n")
 
         # Save the plots for this bag.
         save_plots(bag_file, result, v_constraint, a_constraint, j_constraint)
