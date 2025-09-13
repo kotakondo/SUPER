@@ -12,4 +12,5 @@ run:
 			--network=host \
 			--env="DISPLAY" \
 			--env="QT_X11_NO_MITSHM=1" \
+			-v /media/kkondo/kota_elements/super:/home/kota/data \
 			--rm super

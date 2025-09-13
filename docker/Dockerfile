@@ -131,9 +131,15 @@ RUN echo "alias cbf='clear && roscd && catkin build && ss'" >> ~/.bashrc
 # environment variables
 RUN echo "export DISABLE_ROS1_EOL_WARNINGS=1" >> ~/.bashrc
 
-# Set up Entry Point
+# Set up Entry Point for benchmarking
 # ##########################################
-COPY ./super_sim.yml /
-RUN chmod +x /super_sim.yml
+COPY ./run_benchmarking.yaml /
+RUN chmod +x /run_benchmarking.yaml
+ENTRYPOINT ["tmuxp", "load", "/run_benchmarking.yaml"]
+
+# Set up Entry Point for simple simulation
+# ##########################################
+# COPY ./super_sim.yml /
+# RUN chmod +x /super_sim.yml
 # ENTRYPOINT ["tmuxp", "load", "/super_sim.yml"]
 

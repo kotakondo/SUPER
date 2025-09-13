@@ -1,0 +1,30 @@
+session_name: super_benchmarking
+windows:
+  - window_name: main
+    layout: tiled
+    shell_command_before:
+      - cd /home/kota/super_ws
+      - source /opt/ros/noetic/setup.bash
+    panes:
+
+      # 1) roscore (runs)
+      - roscore
+
+      # 2) benchmark run (runs)
+      - shell_command:
+        - sleep 5
+        - source /opt/ros/noetic/setup.bash && catkin_make -DBUILD_TYPE=Release
+        - source devel/setup.bash
+        - python3 src/SUPER/docker/benchmarking.py 1 300.0 305.0,0.0,3.0 0.5
+
+      # 3.1) bag analyze (prefilled; press Enter to run)
+      - shell_command:
+        - tmux send-keys 'cd /home/kota/super_ws/src/SUPER/docker && python3 analyze_bag.py /home/kota/data 2.0 5.0 30.0'
+
+      # 3.2) collision check (prefilled; press Enter to run)
+      - shell_command:
+        - tmux send-keys 'cd /home/kota/super_ws/src/SUPER/docker && python3 src/SUPER/docker/collision_checker.py /home/kota/data/hard_forest_obstacle_parameters.csv /home/kota/data 0.1 /planning/pos_cmd'
+
+      # 3.3) computation time average (prefilled; press Enter to run)
+      - shell_command:
+        - tmux send-keys 'cd /home/kota/super_ws/src/SUPER/docker && python3 compute_average_computation.py /home/kota/data'
