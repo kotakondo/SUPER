@@ -274,3 +274,7 @@ SUPER is built upon several outstanding open-source projects. We extend our grat
 * [**Nxt-FC**](https://github.com/HKUST-Aerial-Robotics/Nxt-FC) – A compact yet powerful hardware platform for the PX4 flight controller.
 
 We sincerely appreciate the efforts of these communities in advancing robotics research.
+
+# Benchmarking
+
+* if RVIZ does not start in docker, try `xhost +`

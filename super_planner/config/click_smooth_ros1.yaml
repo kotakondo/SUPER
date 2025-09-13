@@ -41,12 +41,12 @@ traj_opt:
 
   boundary:
     max_vel: 2.0
-    max_acc: 10.0
+    max_acc: 5.0
     max_jerk: 30.0
     max_omg: 2.5
-    max_acc_thr: 30.0
+    max_acc_thr: 5.0
     min_acc_thr: 0.0
-    penna_margin: 0.05
+    penna_margin: 0.01
 
   exp_traj:
     # 1 for xi 2 for pos
@@ -63,9 +63,9 @@ traj_opt:
     penna_acc: 5.0e+5
     penna_jerk: -5.0e+5
     penna_attract: 1.0e+3
-    penna_omg:  5.0e+5
-    penna_max_acc_thr:  5.0e+5
-    penna_min_acc_thr:  5.0e+5
+    penna_omg:  0.0
+    penna_max_acc_thr: 0.0
+    penna_min_acc_thr: 0.0
 
   backup_traj:
     pos_constraint_type: 1
@@ -78,7 +78,7 @@ traj_opt:
     smooth_eps: 0.01
     penna_t: 1200.0
     penna_ts: 1.0e+5
-    penna_pos: 1.0e+6
+    penna_pos: 1.0e+7
     penna_vel: 1.0e+5
     penna_acc: 1.0e+5
     penna_jerk: -1.0e+5
@@ -110,7 +110,7 @@ rog_map:
   inflation_step: 2
   unk_inflation_en: false
   unk_inflation_step: 1
-  map_size: [ 100,100,10 ]
+  map_size: [ 30,30,10 ]
   # If the map rolling is disable, the map origin [m] should be set.
   fix_map_origin: [ 0,0,0 ]
   frontier_extraction_en: false

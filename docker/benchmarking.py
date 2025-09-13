@@ -77,7 +77,7 @@ def launch_simulation(sim_num, env_source):
     goal_pub_cmd = (
         f"{env_source} && sleep 10 && "
         "rostopic pub /goal geometry_msgs/PoseStamped "
-        "'{header: {frame_id: \"world\"}, pose: {position: {x: 105.0, y: 0.0, z: 3.0}, "
+        "'{header: {frame_id: \"world\"}, pose: {position: {x: 305.0, y: 0.0, z: 3.0}, "
         "orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}' -1"
     )
     bag_file = f"/home/kota/data/super_num_{sim_num}.bag"
