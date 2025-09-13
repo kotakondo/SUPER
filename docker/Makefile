@@ -1,7 +1,7 @@
 build:
 	docker build -t super .
 
-build-clone:
+build-no-cache:
 	docker build --build-arg DUMMY=`date +%s` -t super .
 run:
 	docker run  -it \

@@ -276,5 +276,12 @@ SUPER is built upon several outstanding open-source projects. We extend our grat
 We sincerely appreciate the efforts of these communities in advancing robotics research.
 
 # Benchmarking
+1. Build the docker by `make build` or `make build-no-cache` in SUPER/docker
+2. Run the docker by `make run` in SUPER/docker. This will automatically open tmux (run_benchmarking.yaml) and start the benchmarking.
+3. As specified in Makefile SSD will be mounted so docker data will be saved in the fiolder (e.g. -v /media/kkondo/kota_elements/super:/home/kota/data)
 
+# Benchmarking Setting change
+* If you want to change the map, udpate .world file in acl-gazebo/acl_sim/worlds and start_world.launch file in acl-gazebo/acl_sim/launch.
+
+# Benchmarking Errors
 * if RVIZ does not start in docker, try `xhost +`
