@@ -24,16 +24,32 @@ def _trapz_safe(y, t):
     """
     Trapezoidal integral of y wrt t.
     - Sort by time if needed.
-    - Return 0.0 if fewer than 2 samples.
+    - Trim to common length if lengths differ.
+    - Drop NaN/Inf; return 0.0 if fewer than 2 valid samples.
     """
     y = np.asarray(y, dtype=float)
     t = np.asarray(t, dtype=float)
-    if y.size < 2 or t.size < 2:
+
+    # Trim to common length (prevents y[order] OOB)
+    n = min(y.size, t.size)
+    if n < 2:
         return 0.0
+    if (y.size != t.size) and n >= 2:
+        # Optional: print a one-liner to know this happened
+        # print(f"[trapz] length mismatch y={y.size}, t={t.size} -> trimming to {n}")
+        y = y[:n]
+        t = t[:n]
+
     order = np.argsort(t)
     t_sorted = t[order]
     y_sorted = y[order]
-    return float(np.trapz(y_sorted, t_sorted))
+
+    # Remove non-finite pairs
+    mask = np.isfinite(t_sorted) & np.isfinite(y_sorted)
+    if mask.sum() < 2:
+        return 0.0
+
+    return float(np.trapz(y_sorted[mask], t_sorted[mask]))
 
 def process_bag(bag_file, tol=5.0, v_constraint=10.0, a_constraint=20.0, j_constraint=30.0):
     """
@@ -91,13 +107,6 @@ def process_bag(bag_file, tol=5.0, v_constraint=10.0, a_constraint=20.0, j_const
             pos = (msg.position.x, msg.position.y, msg.position.z)
             positions.append(pos)
 
-            # check if the distance from the start of travel is > tolerance
-            if start_time is None:
-                if compute_distance(pos, goal_position) > tol:
-                    start_time = pos_time
-                    print(f"  Start of travel detected at time {start_time:.3f}")
-                else:
-                    continue
 
             # Norms
             vel = np.linalg.norm([msg.velocity.x, msg.velocity.y, msg.velocity.z])
@@ -113,6 +122,14 @@ def process_bag(bag_file, tol=5.0, v_constraint=10.0, a_constraint=20.0, j_const
             if jrk > j_thresh: jerk_violations += 1
 
             total_pos_cmds += 1
+
+            # check if the distance from the start of travel is > tolerance
+            if start_time is None:
+                if compute_distance(pos, positions[0]) > tol:
+                    start_time = pos_time
+                    print(f"  Start of travel detected at time {start_time:.3f}")
+                else:
+                    continue
 
             # Reached goal?
             if compute_distance(pos, goal_position) <= tol:
