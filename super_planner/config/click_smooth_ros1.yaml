@@ -27,8 +27,8 @@ super_planner:
   planning_horizon: 10.0
   sensing_horizon: 15.0
   receding_dis: 4.0
-  robot_r: 0.2
-  yaw_dot_max: 3.0
+  robot_r: 0.1
+  yaw_dot_max: 1.0
   # Yaw mode: 1 heading to velocity, 2 heading to goal
   yaw_mode: 1
   mpc_horizon: 15
@@ -40,8 +40,8 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
-    max_vel: 2.0
-    max_acc: 5.0
+    max_vel: 4.0
+    max_acc: 10.0
     max_jerk: 30.0
     max_omg: 2.5
     max_acc_thr: 5.0
@@ -57,7 +57,7 @@ traj_opt:
     scale_factor: 1.0
     integral_reso: 15
     smooth_eps: 0.01
-    penna_t: 12000.0
+    penna_t: 10000.0
     penna_pos: 5.0e+6
     penna_vel: 5.0e+5
     penna_acc: 5.0e+5
@@ -82,9 +82,9 @@ traj_opt:
     penna_vel: 1.0e+5
     penna_acc: 1.0e+5
     penna_jerk: -1.0e+5
-    penna_omg: 1.0e+5
-    penna_max_acc_thr: 1.0e+5
-    penna_min_acc_thr: 1.0e+5
+    penna_omg: 0.0
+    penna_max_acc_thr: 0.0
+    penna_min_acc_thr: 0.0
 
   flatness:
     mass: 1.64
