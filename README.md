@@ -275,6 +275,12 @@ SUPER is built upon several outstanding open-source projects. We extend our grat
 
 We sincerely appreciate the efforts of these communities in advancing robotics research.
 
+# Standardized Benchmarking Instructions
+0. Use docker for benchmarking to avoid dependency issues.
+1. Run `roscore` in a separate terminal.
+2. Build the workspace by `catkin_make -DBUILD_TYPE=Release` in ROS1.
+3. Then run the command `. devel/setup.bash && rosrun super_planner super_local_traj_benchmark` in `super_ws`. This will read sfc data from `/home/kota/data` and save data in `/home/kota/data`.
+
 # Benchmarking
 1. Build the docker by `make build` or `make build-no-cache` in SUPER/docker
 2. Run the docker by `make run` in SUPER/docker. This will automatically open tmux (run_benchmarking.yaml) and start the benchmarking.
