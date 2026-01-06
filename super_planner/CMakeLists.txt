@@ -7,6 +7,8 @@ add_compile_options(-DQT_NO_VERSION_TAGGING)
 add_compile_options(-Werror=return-type)
 add_compile_options(-Werror=unused-variable)
 add_compile_options(-Werror=unused-but-set-variable)
+add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address,undefined")
 set(CMAKE_CXX_STANDARD 17)
 
 # Define the voxelize and raycasting method
@@ -14,15 +16,15 @@ add_definitions(-DORIGIN_AT_CORNER)
 add_definitions(-DFMT_HEADER_ONLY)
 add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\")
 
-
 string(TOUPPER $ENV{ROS_DISTRO} ROS_VERSION)
 message(STATUS "ROS version: ${ROS_VERSION}")
 
 message("Using ROS1")
-# add a marco for ros1
 add_definitions(-DUSE_ROS1)
+
 find_package(catkin REQUIRED COMPONENTS
         roscpp
+        roslib          # <-- ADDED (needed if benchmark uses ros::package::getPath)
         std_msgs
         pcl_ros
         geometry_msgs
@@ -35,15 +37,16 @@ find_package(catkin REQUIRED COMPONENTS
         yaml-cpp
         tf
 )
+
 find_package(yaml-cpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem regex iostreams)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
+
 catkin_package(
         INCLUDE_DIRS
         LIBRARIES super_planner
         CATKIN_DEPENDS roscpp rospy std_msgs
-        #  DEPENDS system_lib
 )
 
 include_directories(
@@ -53,14 +56,13 @@ include_directories(
         ${catkin_INCLUDE_DIRS}
         ${Eigen3_INCLUDE_DIRS}
         ${PCL_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS}   # optional but recommended
 )
-
 
 set(THIRD_PARTY
         ${catkin_LIBRARIES}
         ${PCL_LIBRARIES}
         ${Boost_LIBRARIES}
-        #        super_planner
         yaml-cpp
         -ldw
 )
@@ -68,10 +70,10 @@ set(THIRD_PARTY
 file(GLOB_RECURSE srcs CONFIGURE_DEPENDS src/*.cpp include/*.h include/*.hpp)
 add_library(super STATIC ${srcs})
 target_include_directories(super PUBLIC
-        include)
+        include
+)
 target_link_libraries(super PUBLIC
 )
-
 
 add_executable(fsm_node
         Apps/fsm_node_ros1.cpp
@@ -90,12 +92,23 @@ target_link_libraries(read_replan_log
         ${THIRD_PARTY}
 )
 
-
 add_executable(traj_opt_tuning
         Apps/traj_opt_tuning.cpp
 )
 target_link_libraries(traj_opt_tuning
         super
         -lncurses
+        ${THIRD_PARTY}
+)
+
+# -----------------------------
+# NEW: SUPER local traj benchmark
+# Put your file at: super_planner/Apps/super_local_traj_benchmark.cpp
+# -----------------------------
+add_executable(super_local_traj_benchmark
+        Apps/super_local_traj_benchmark.cpp
+)
+target_link_libraries(super_local_traj_benchmark
+        super
         ${THIRD_PARTY}
 )
