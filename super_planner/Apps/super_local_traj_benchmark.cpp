@@ -602,10 +602,11 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     ros::NodeHandle pnh("~");
 
-    std::string sfc_dir, file_ext, csv_out;
+    std::string root_dir, sfc_dir, file_ext, csv_out;
     std::string config_path, config_name;
 
-    pnh.param<std::string>("sfc_dir", sfc_dir, std::string("/home/kota/data"));
+    pnh.param<std::string>("root_dir", root_dir, std::string("/home/kota/data"));
+    pnh.param<std::string>("sfc_dir", sfc_dir, std::string("/home/kota/data/sfc_files"));
     pnh.param<std::string>("file_ext", file_ext, std::string(".mysco2"));
     pnh.param<std::string>("csv_out", csv_out, std::string("/home/kota/data/super_local_traj_benchmark.csv"));
 
@@ -639,6 +640,12 @@ int main(int argc, char **argv)
     double traj_dump_dt = 0.03;
     pnh.param<double>("traj_dump_dt", traj_dump_dt, 0.03);
 
+    if (root_dir.empty())
+    {
+        ROS_ERROR("~root_dir is empty. Set it to the root folder for data files.");
+        return 1;
+    }
+
     if (sfc_dir.empty())
     {
         ROS_ERROR("~sfc_dir is empty. Set it to the folder containing .mysco2 files.");
@@ -647,7 +654,7 @@ int main(int argc, char **argv)
 
     if (traj_dump_dir.empty())
     {
-        traj_dump_dir = sfc_dir + "/traj_dump_ros1";
+        traj_dump_dir = root_dir + "/traj_dump_ros1";
     }
 
     if (traj_dump_enable)
