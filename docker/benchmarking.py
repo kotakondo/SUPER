@@ -12,6 +12,30 @@ from quadrotor_msgs.msg import PositionCommand
 # CSV file to log simulation outcomes.
 CSV_PATH = "/home/kota/data/goal_reached_status_super.csv"
 
+# Topics to record (explicit allowlist to keep bags small)
+TOPICS_TO_RECORD = [
+    "/clock",
+    "/parameter_events",
+    "/rosout",
+    "/tf",
+    "/tf_static",
+    "/livox/lidar",
+    "/fsm_node/traj_opt/back/mkr_arr",
+    "/fsm_node/traj_opt/exp/mkr_arr",
+    "/fsm_node/visualization/yaw_traj",
+    "/astar_debug/mkr_arr",
+    "/fsm_node/debug",
+    "/fsm_node/visualization/astar_debug",
+    "/fsm_node/rog_map/map_bound",
+    "/fsm_node/visualization/replan_log_mkr",
+    "/fsm_node/visualization/replan_log_pc",
+    "/perfect_drone/vel_text",
+    "/waypoint_mission/mkr",
+    "/waypoint_mission",
+    "/goal",
+    "/planning/pos_cmd",
+]
+
 def run_command(cmd):
     """Launch a command via bash -c and return the Popen handle."""
     return subprocess.Popen(["bash", "-c", cmd])
@@ -77,11 +101,12 @@ def launch_simulation(sim_num, env_source):
     goal_pub_cmd = (
         f"{env_source} && sleep 10 && "
         "rostopic pub /goal geometry_msgs/PoseStamped "
-        "'{header: {frame_id: \"world\"}, pose: {position: {x: 305.0, y: 0.0, z: 3.0}, "
+        "'{header: {frame_id: \"world\"}, pose: {position: {x: 105.0, y: 0.0, z: 3.0}, "
         "orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}' -1"
     )
     bag_file = f"/home/kota/data/super_num_{sim_num}.bag"
-    rosbag_cmd = f"{env_source} && rosbag record -a -O {bag_file}"
+    topics_str = " ".join(TOPICS_TO_RECORD)
+    rosbag_cmd = f"{env_source} && rosbag record --lz4 -O {bag_file} {topics_str}"
 
     processes = []
 

@@ -70,7 +70,7 @@ def process_bag(bag_path, cylinders, drone_radius, topic="/planning/pos_cmd"):
 def main():
     if len(sys.argv) < 5:
         print("Usage: {} <forest_csv_path> <bag_folder> <drone_radius> <pos_topic_name>".format(sys.argv[0]))
-        print("Example: python3 collision_checker.py /home/kota/data/easy_forest_obstacle_parameters.csv /home/kota/data 0.1 /planning/pos_cmd")
+        print("Example: python3 collision_checker.py /home/kota/data/hard_forest_obstacle_parameters.csv /home/kota/data 0.1 /planning/pos_cmd")
         sys.exit(1)
     forest_csv = sys.argv[1]
     bag_folder = sys.argv[2]

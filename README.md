@@ -277,9 +277,10 @@ We sincerely appreciate the efforts of these communities in advancing robotics r
 
 # Standardized Benchmarking Instructions
 0. Use docker for benchmarking to avoid dependency issues.
-1. Run `roscore` in a separate terminal.
-2. Build the workspace by `catkin_make -DBUILD_TYPE=Release` in ROS1.
-3. Then run the command `. devel/setup.bash && rosrun super_planner super_local_traj_benchmark` in `super_ws`. This will read sfc data from `/home/kota/data` and save data in `/home/kota/data`.
+1. Move `mysco2` files to the folder that is linked to `/home/kota/data` in docker. (e.g. `/media/kkondo/kota_elements/super` by `-v /media/kkondo/kota_elements/super:/home/kota/data` in `Makefile`)
+2. Run `roscore` in a separate terminal.
+3. Build the workspace by `catkin_make -DBUILD_TYPE=Release` in ROS1.
+4. Then run the command `. devel/setup.bash && rosrun super_planner super_local_traj_benchmark` in `super_ws`. This will read sfc data from `/home/kota/data` and save data in `/home/kota/data`.
 
 # Benchmarking
 1. Build the docker by `make build` or `make build-no-cache` in SUPER/docker
