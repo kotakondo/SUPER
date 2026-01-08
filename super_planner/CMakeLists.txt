@@ -7,8 +7,6 @@ add_compile_options(-DQT_NO_VERSION_TAGGING)
 add_compile_options(-Werror=return-type)
 add_compile_options(-Werror=unused-variable)
 add_compile_options(-Werror=unused-but-set-variable)
-add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address,undefined")
 set(CMAKE_CXX_STANDARD 17)
 
 # Define the voxelize and raycasting method
