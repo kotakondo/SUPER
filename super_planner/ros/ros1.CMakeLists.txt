@@ -99,3 +99,11 @@ target_link_libraries(traj_opt_tuning
         -lncurses
         ${THIRD_PARTY}
 )
+
+add_executable(local_traj_benchmark
+        Apps/local_traj_benchmark.cpp
+)
+target_link_libraries(local_traj_benchmark
+        super
+        ${THIRD_PARTY}
+)

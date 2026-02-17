@@ -40,6 +40,7 @@ traj_opt:
     print_optimizer_log: false
 
   boundary:
+    constraint_norm_type: 0  # 0: L2, 1: L-inf
     max_vel: 25.0
     max_acc: 20.0
     max_jerk: 120.0

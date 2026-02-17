@@ -133,9 +133,9 @@ RUN echo "export DISABLE_ROS1_EOL_WARNINGS=1" >> ~/.bashrc
 
 # Set up Entry Point for benchmarking
 # ##########################################
-COPY ./run_benchmarking.yaml /
-RUN chmod +x /run_benchmarking.yaml
-ENTRYPOINT ["tmuxp", "load", "/run_benchmarking.yaml"]
+COPY ./run_benchmarking.yaml /home/kota/super_ws/
+RUN chmod +x /home/kota/super_ws/run_benchmarking.yaml
+# ENTRYPOINT ["tmuxp", "load", "/run_benchmarking.yaml"]
 
 # Set up Entry Point for simple simulation
 # ##########################################

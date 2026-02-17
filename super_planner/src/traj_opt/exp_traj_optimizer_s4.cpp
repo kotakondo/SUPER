@@ -53,6 +53,7 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
                                        const VecDf &magnitudeBounds,
                                        const VecDf &penaltyWeights,
                                        flatness::FlatnessMap &flatMap,
+                                       const int &constraintNormType,
         // outputs
                                        double &cost,
                                        VecDf &gradT,
@@ -155,30 +156,66 @@ void ExpTrajOpt::constraintsFunctional(const VecDf &T,
             }
 
             /* 2.3 For vel cost  */
-            const auto &violaVel = vel.squaredNorm() - vmaxSqr;
-            double violaVelPena, violaVelPenaD;
-            if (weightVel > 0 && gcopter::smoothedL1(violaVel, smoothFactor, violaVelPena, violaVelPenaD)) {
-                gradVel += weightVel * violaVelPenaD * 2.0 * vel;
-                tmp_cost += weightVel * violaVelPena;
-                if (violaVel > max_pena(VEL_IDX)) max_pena(VEL_IDX) = violaVel;
+            if (constraintNormType == NORM_LINF) {
+                for (int d = 0; d < 3; d++) {
+                    const double violaVel_d = vel(d) * vel(d) - vmaxSqr;
+                    double violaVelPena_d, violaVelPenaD_d;
+                    if (weightVel > 0 && gcopter::smoothedL1(violaVel_d, smoothFactor, violaVelPena_d, violaVelPenaD_d)) {
+                        gradVel(d) += weightVel * violaVelPenaD_d * 2.0 * vel(d);
+                        tmp_cost += weightVel * violaVelPena_d;
+                        if (violaVel_d > max_pena(VEL_IDX)) max_pena(VEL_IDX) = violaVel_d;
+                    }
+                }
+            } else {
+                const auto &violaVel = vel.squaredNorm() - vmaxSqr;
+                double violaVelPena, violaVelPenaD;
+                if (weightVel > 0 && gcopter::smoothedL1(violaVel, smoothFactor, violaVelPena, violaVelPenaD)) {
+                    gradVel += weightVel * violaVelPenaD * 2.0 * vel;
+                    tmp_cost += weightVel * violaVelPena;
+                    if (violaVel > max_pena(VEL_IDX)) max_pena(VEL_IDX) = violaVel;
+                }
             }
 
             /* 2.4 For acc cost  */
-            const auto &violaAcc = acc.squaredNorm() - amaxSqr;
-            double violaAccPena, violaAccPenaD;
-            if (weightAcc > 0 && gcopter::smoothedL1(violaAcc, smoothFactor, violaAccPena, violaAccPenaD)) {
-                gradAcc += weightAcc * violaAccPenaD * 2.0 * acc;
-                tmp_cost += weightAcc * violaAccPena;
-                if (violaAcc > max_pena(ACC_IDX)) max_pena(ACC_IDX) = violaAcc;
+            if (constraintNormType == NORM_LINF) {
+                for (int d = 0; d < 3; d++) {
+                    const double violaAcc_d = acc(d) * acc(d) - amaxSqr;
+                    double violaAccPena_d, violaAccPenaD_d;
+                    if (weightAcc > 0 && gcopter::smoothedL1(violaAcc_d, smoothFactor, violaAccPena_d, violaAccPenaD_d)) {
+                        gradAcc(d) += weightAcc * violaAccPenaD_d * 2.0 * acc(d);
+                        tmp_cost += weightAcc * violaAccPena_d;
+                        if (violaAcc_d > max_pena(ACC_IDX)) max_pena(ACC_IDX) = violaAcc_d;
+                    }
+                }
+            } else {
+                const auto &violaAcc = acc.squaredNorm() - amaxSqr;
+                double violaAccPena, violaAccPenaD;
+                if (weightAcc > 0 && gcopter::smoothedL1(violaAcc, smoothFactor, violaAccPena, violaAccPenaD)) {
+                    gradAcc += weightAcc * violaAccPenaD * 2.0 * acc;
+                    tmp_cost += weightAcc * violaAccPena;
+                    if (violaAcc > max_pena(ACC_IDX)) max_pena(ACC_IDX) = violaAcc;
+                }
             }
 
-            /* 2.5 For acc cost  */
-            const auto &violaJer = jer.squaredNorm() - jmaxSqr;
-            double violaJerPena, violaJerPenaD;
-            if (weightJer > 0 && gcopter::smoothedL1(violaJer, smoothFactor, violaJerPena, violaJerPenaD)) {
-                gradJer += weightJer * violaJerPenaD * 2.0 * jer;
-                tmp_cost += weightJer * violaJerPena;
-                if (violaJer > max_pena(JER_IDX)) max_pena(JER_IDX) = violaJer;
+            /* 2.5 For jerk cost  */
+            if (constraintNormType == NORM_LINF) {
+                for (int d = 0; d < 3; d++) {
+                    const double violaJer_d = jer(d) * jer(d) - jmaxSqr;
+                    double violaJerPena_d, violaJerPenaD_d;
+                    if (weightJer > 0 && gcopter::smoothedL1(violaJer_d, smoothFactor, violaJerPena_d, violaJerPenaD_d)) {
+                        gradJer(d) += weightJer * violaJerPenaD_d * 2.0 * jer(d);
+                        tmp_cost += weightJer * violaJerPena_d;
+                        if (violaJer_d > max_pena(JER_IDX)) max_pena(JER_IDX) = violaJer_d;
+                    }
+                }
+            } else {
+                const auto &violaJer = jer.squaredNorm() - jmaxSqr;
+                double violaJerPena, violaJerPenaD;
+                if (weightJer > 0 && gcopter::smoothedL1(violaJer, smoothFactor, violaJerPena, violaJerPenaD)) {
+                    gradJer += weightJer * violaJerPenaD * 2.0 * jer;
+                    tmp_cost += weightJer * violaJerPena;
+                    if (violaJer > max_pena(JER_IDX)) max_pena(JER_IDX) = violaJer;
+                }
             }
 
             Vec3f totalGradPos{0.0, 0.0, 0.0}, totalGradVel{0.0, 0.0, 0.0},
@@ -316,6 +353,7 @@ double ExpTrajOpt::costFunctional(void *ptr,
                           smooth_eps, integral_res,
                           magnitudeBounds, penaltyWeights,
                           quadrotor_flatness,
+                          obj.constraint_norm_type,
                           cost, partialGradByTimes, partialGradByCoeffs, obj.penalty_log);
 
     /* 5) Propagate the gradient from CT to PT */
@@ -785,6 +823,7 @@ ExpTrajOpt::ExpTrajOpt(const traj_opt::Config &cfg, const ros_interface::RosInte
             cfg_.penna_thr;
     opt_vars.rho = cfg_.penna_t;
     opt_vars.pos_constraint_type = cfg_.pos_constraint_type;
+    opt_vars.constraint_norm_type = cfg_.constraint_norm_type;
     opt_vars.block_energy_cost = cfg_.block_energy_cost;
     opt_vars.smooth_eps = cfg_.smooth_eps;
     opt_vars.integral_res = cfg_.integral_reso;

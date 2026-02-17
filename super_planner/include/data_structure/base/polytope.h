@@ -129,7 +129,24 @@ namespace geometry_utils {
                 Polytope check_cand = sfcs_new[0], last_overlapped = sfcs_new[1];
                 PolytopeVec sfcs_final;
                 sfcs_final.push_back(sfcs_new[0]);
-                for (int i = 2; i < sfcs_new.size(); i++) {
+                int prev_i = -1, same_count = 0;
+                for (int i = 2; i < static_cast<int>(sfcs_new.size()); i++) {
+                    // Guard against infinite loop: if i hasn't advanced, count retries
+                    if (i == prev_i) {
+                        same_count++;
+                        if (same_count > 1) {
+                            // Consecutive corridors don't overlap — force advance
+                            sfcs_final.push_back(sfcs_new[i]);
+                            check_cand = sfcs_new[i];
+                            last_overlapped = (i + 1 < static_cast<int>(sfcs_new.size())) ? sfcs_new[i + 1] : sfcs_new[i];
+                            same_count = 0;
+                            continue;
+                        }
+                    } else {
+                        same_count = 0;
+                    }
+                    prev_i = i;
+
                     Polytope cross_poly = check_cand.CrossWith(sfcs_new[i]);
                     Vec3f interior_pt;
                     bool is_overlapped = geometry_utils::findInterior(cross_poly.GetPlanes(), interior_pt);

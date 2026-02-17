@@ -1,7 +1,7 @@
 fsm:
   click_goal_en: true
-  click_goal_topic: "/planning/click_goal"
-  click_height: 1.5
+  click_goal_topic: "/goal"
+  click_height: 2.0
   click_yaw_en: true
   replan_rate: 15.0
   cmd_topic: "/planning/pos_cmd"
@@ -25,7 +25,7 @@ super_planner:
   obs_skip_num: 2
   replan_forward_dt: 0.1
   planning_horizon: 7.0
-  sensing_horizon: -1
+  sensing_horizon: 30.0
   receding_dis: 1.0
   robot_r: 0.2
   yaw_dot_max: 3.0
@@ -35,14 +35,14 @@ super_planner:
 
 traj_opt:
   switch:
-    save_log_en: false
+    save_log_en: true
     print_optimizer_log: false
 
   boundary:
-    constraint_norm_type: 0  # 0: L2, 1: L-inf
-    max_vel: 8.0
-    max_acc: 15.0
-    max_jerk: 120.0
+    constraint_norm_type: 1  # 0: L2, 1: L-inf
+    max_vel: 5.0
+    max_acc: 20.0
+    max_jerk: 100.0
     max_omg: 2.5
     max_acc_thr: 17.0
     min_acc_thr: 6.0
@@ -102,14 +102,14 @@ astar:
 
 
 rog_map:
-  resolution: 0.05
-  inflation_resolution: 0.1
-  inflation_step: 3
+  resolution: 0.1
+  inflation_resolution: 0.2
+  inflation_step: 2
   unk_inflation_en: false
   unk_inflation_step: 1
-  map_size: [ 15,110,6 ]
+  map_size: [ 120, 50, 6 ]
   # If the map rolling is disable, the map origin [m] should be set.
-  fix_map_origin: [ 0,0,1.5 ]
+  fix_map_origin: [ 55, 0, 1.5 ]
   frontier_extraction_en: false
 
   # Virtual ceil and ground
@@ -127,7 +127,7 @@ rog_map:
     enable: false
     resolution: 0.1
     # The range of esdf around the odom [m].
-    local_update_box: [ 5,5,3 ]
+    local_update_box: [ 5, 5, 3 ]
 
   # If [enable = true], the ROG-Map will actively take ros topic as input.
   #  else user should call function [updateMap] to update the map.
@@ -139,7 +139,7 @@ rog_map:
 
 
   visualization:
-    enable: false
+    enable: true
     # when enabled, use rqt_reconfigure to change the visualization parameters.
     use_dynamic_reconfigure: false
     # The rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
@@ -147,7 +147,7 @@ rog_map:
     # The frame rate of visualization [Hz], if set to 0, the visualization will not be triggered by frame.
     frame_rate: 0
     # visualization range along the odom [m].
-    range: [ 15, 15,4 ]
+    range: [ 15, 15, 4 ]
     frame_id: "world"
     pub_unknown_map_en: false
 
@@ -164,7 +164,7 @@ rog_map:
     # will be considered as unknown.
     enable: false
     batch_update_size: 1
-    local_update_box: [ 100,100,5 ]
+    local_update_box: [ 100, 100, 5 ]
     # The range of raycasting [m].
     ray_range: [0.5, 100 ]
 
@@ -175,12 +175,4 @@ rog_map:
     p_hit: 0.9
     p_max: 0.98
     # The threshold of a non-occupied inf map grid to be considered as free. [0.0-1.0]
-    # for counter map, if each cell contains N cells in prob map, then only when
-    # N_unk > N * unk_thresh cells are unknown, the cell will be considered as unknown.
-    # example: 1) if unk_thresh is set 0.0, then once at least one cell in prob map is unknown,
-    #             the cell will be considered as unknown.
-    #         2) if unk_thresh is set to 1.0, then only all cells in prob map are unknown,
-    #             the cell will be considered as unknown.
-    # in all, 1.0 is more aggressive while 0.0 is more conservative.
     unk_thresh: 1.0
-

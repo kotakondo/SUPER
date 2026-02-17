@@ -75,6 +75,7 @@ namespace traj_opt {
             Eigen::Matrix3Xd points;
             Eigen::VectorXd times;
             Eigen::VectorXd magnitudeBounds, penaltyWeights;
+            int constraint_norm_type;
 
             Eigen::Matrix3Xd init_path;
             Eigen::Matrix3Xd waypoint_attractor;
@@ -128,6 +129,7 @@ namespace traj_opt {
                                           const Eigen::VectorXd &magnitudeBounds,
                                           const Eigen::VectorXd &penaltyWeights,
                                           flatness::FlatnessMap &flatMap,
+                                          const int &constraintNormType,
                                           double &cost,
                                           Eigen::VectorXd &gradT,
                                           Eigen::MatrixX3d &gradC,

@@ -76,6 +76,7 @@ namespace traj_opt {
             Mat3Df points;
             VecDf times;
             VecDf magnitudeBounds, penaltyWeights;
+            int constraint_norm_type;
 
             PolyhedraV vPolytopes; // the original sfc and intersecting sfc
             PolyhedraH hPolytopes; // the original sfc
@@ -117,6 +118,7 @@ namespace traj_opt {
                                           const VecDf &magnitudeBounds,
                                           const VecDf &penaltyWeights,
                                           flatness::FlatnessMap &flatMap,
+                                          const int &constraintNormType,
                                           double &cost,
                                           VecDf &gradT,
                                           MatD3f &gradC,

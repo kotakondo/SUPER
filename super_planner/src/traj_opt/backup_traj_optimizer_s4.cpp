@@ -37,6 +37,7 @@ void BackupTrajOpt::constraintsFunctional(const Eigen::VectorXd &T,
                                           const Eigen::VectorXd &magnitudeBounds,
                                           const Eigen::VectorXd &penaltyWeights,
                                           flatness::FlatnessMap &flatMap,
+                                          const int &constraintNormType,
                                           double &cost,
                                           Eigen::VectorXd &gradT,
                                           Eigen::MatrixX3d &gradC,
@@ -155,22 +156,64 @@ void BackupTrajOpt::constraintsFunctional(const Eigen::VectorXd &T,
                 }
             }
 
-            if (weightVel > 0 && gcopter::smoothedL1(violaVel, smoothFactor, violaVelPena, violaVelPenaD)) {
-                gradVel += weightVel * violaVelPenaD * 2.0 * vel;
-                pena += weightVel * violaVelPena;
-                vel_penna_log += weightVel * violaVelPena;
+            if (constraintNormType == NORM_LINF) {
+                violaVel = -vmaxSqr;  // Reset for proper L-inf per-axis tracking
+                for (int d = 0; d < 3; d++) {
+                    const double violaVel_d = vel(d) * vel(d) - vmaxSqr;
+                    double violaVelPena_d, violaVelPenaD_d;
+                    if (weightVel > 0 && gcopter::smoothedL1(violaVel_d, smoothFactor, violaVelPena_d, violaVelPenaD_d)) {
+                        gradVel(d) += weightVel * violaVelPenaD_d * 2.0 * vel(d);
+                        pena += weightVel * violaVelPena_d;
+                        vel_penna_log += weightVel * violaVelPena_d;
+                    }
+                    if (violaVel_d > violaVel) violaVel = violaVel_d;
+                }
+            } else {
+                if (weightVel > 0 && gcopter::smoothedL1(violaVel, smoothFactor, violaVelPena, violaVelPenaD)) {
+                    gradVel += weightVel * violaVelPenaD * 2.0 * vel;
+                    pena += weightVel * violaVelPena;
+                    vel_penna_log += weightVel * violaVelPena;
+                }
             }
 
-            if (weightAcc > 0 && gcopter::smoothedL1(violaAcc, smoothFactor, violaAccPena, violaAccPenaD)) {
-                gradAcc += weightAcc * violaAccPenaD * 2.0 * acc;
-                pena += weightAcc * violaAccPena;
-                acc_penna_log += weightAcc * violaAccPena;
+            if (constraintNormType == NORM_LINF) {
+                violaAcc = -amaxSqr;  // Reset for proper L-inf per-axis tracking
+                for (int d = 0; d < 3; d++) {
+                    const double violaAcc_d = acc(d) * acc(d) - amaxSqr;
+                    double violaAccPena_d, violaAccPenaD_d;
+                    if (weightAcc > 0 && gcopter::smoothedL1(violaAcc_d, smoothFactor, violaAccPena_d, violaAccPenaD_d)) {
+                        gradAcc(d) += weightAcc * violaAccPenaD_d * 2.0 * acc(d);
+                        pena += weightAcc * violaAccPena_d;
+                        acc_penna_log += weightAcc * violaAccPena_d;
+                    }
+                    if (violaAcc_d > violaAcc) violaAcc = violaAcc_d;
+                }
+            } else {
+                if (weightAcc > 0 && gcopter::smoothedL1(violaAcc, smoothFactor, violaAccPena, violaAccPenaD)) {
+                    gradAcc += weightAcc * violaAccPenaD * 2.0 * acc;
+                    pena += weightAcc * violaAccPena;
+                    acc_penna_log += weightAcc * violaAccPena;
+                }
             }
 
-            if (weightJer > 0 && gcopter::smoothedL1(violaJer, smoothFactor, violaJerPena, violaJerPenaD)) {
-                gradJer += weightJer * violaJerPenaD * 2.0 * jer;
-                pena += weightJer * violaJerPena;
-                jer_penna_log += weightJer * violaJerPena;
+            if (constraintNormType == NORM_LINF) {
+                violaJer = -jmaxSqr;  // Reset for proper L-inf per-axis tracking
+                for (int d = 0; d < 3; d++) {
+                    const double violaJer_d = jer(d) * jer(d) - jmaxSqr;
+                    double violaJerPena_d, violaJerPenaD_d;
+                    if (weightJer > 0 && gcopter::smoothedL1(violaJer_d, smoothFactor, violaJerPena_d, violaJerPenaD_d)) {
+                        gradJer(d) += weightJer * violaJerPenaD_d * 2.0 * jer(d);
+                        pena += weightJer * violaJerPena_d;
+                        jer_penna_log += weightJer * violaJerPena_d;
+                    }
+                    if (violaJer_d > violaJer) violaJer = violaJer_d;
+                }
+            } else {
+                if (weightJer > 0 && gcopter::smoothedL1(violaJer, smoothFactor, violaJerPena, violaJerPenaD)) {
+                    gradJer += weightJer * violaJerPenaD * 2.0 * jer;
+                    pena += weightJer * violaJerPena;
+                    jer_penna_log += weightJer * violaJerPena;
+                }
             }
 
             if (weightOmg > 0 && weightAccThr > 0) {
@@ -307,6 +350,7 @@ double BackupTrajOpt::costFunctional(void *ptr, const Eigen::VectorXd &x, Eigen:
                           obj.smooth_eps, obj.integral_res,
                           obj.magnitudeBounds, obj.penaltyWeights,
                           obj.quadrotor_flatness,
+                          obj.constraint_norm_type,
                           cost, obj.partialGradByTimes, obj.partialGradByCoeffs,
                           obj.penalty_log);
 
@@ -580,6 +624,7 @@ BackupTrajOpt::BackupTrajOpt(const traj_opt::Config &cfg, const ros_interface::R
             cfg_.penna_thr;
     opt_vars.rho = cfg_.penna_t;
     opt_vars.pos_constraint_type = cfg_.pos_constraint_type;
+    opt_vars.constraint_norm_type = cfg_.constraint_norm_type;
     opt_vars.block_energy_cost = cfg_.block_energy_cost;
     opt_vars.smooth_eps = cfg_.smooth_eps;
     opt_vars.integral_res = cfg_.integral_reso;
@@ -588,13 +633,15 @@ BackupTrajOpt::BackupTrajOpt(const traj_opt::Config &cfg, const ros_interface::R
 }
 
 bool BackupTrajOpt::checkTrajMagnitudeBound(Trajectory &out_traj) {
-    if (cfg_.penna_vel > 0 && out_traj.getMaxVelRate() > 1.2 * cfg_.max_vel) {
+    const double vel_scale = (cfg_.constraint_norm_type == NORM_LINF) ? std::sqrt(3.0) : 1.0;
+    const double acc_scale = vel_scale;
+    if (cfg_.penna_vel > 0 && out_traj.getMaxVelRate() > 1.2 * vel_scale * cfg_.max_vel) {
         std::cout << YELLOW << " -- [TrajOpt] Minco backup opt failed." << RESET << std::endl;
         std::cout << YELLOW << "\t\tBackend Max vel:\t" << out_traj.getMaxVelRate() << " m/s" << RESET
                   << std::endl;
         return false;
     }
-    if (cfg_.penna_acc > 0 && out_traj.getMaxAccRate() > 1.2 * cfg_.max_acc) {
+    if (cfg_.penna_acc > 0 && out_traj.getMaxAccRate() > 1.2 * acc_scale * cfg_.max_acc) {
         std::cout << YELLOW << " -- [TrajOpt] Minco backup opt failed." << RESET << std::endl;
         std::cout << YELLOW << "\t\tBackend Max Acc:\t" << out_traj.getMaxAccRate() << " m/s" << RESET
                   << std::endl;

@@ -37,6 +37,11 @@ namespace traj_opt {
         CORRIDOR = 2,
     };
 
+    enum ConstraintNormType {
+        NORM_L2 = 0,
+        NORM_LINF = 1,
+    };
+
     class Config {
     public:
         flatness::FlatnessMap quadrotot_flatness;
@@ -64,6 +69,8 @@ namespace traj_opt {
         int piece_num{0};
 
         double penna_margin{0.05};
+
+        int constraint_norm_type{NORM_L2};
 
         double smooth_eps{0};
         int integral_reso{0};
@@ -103,6 +110,7 @@ namespace traj_opt {
             loader.LoadParam("traj_opt/boundary/max_acc_thr", max_acc_thr, -1.0);
             loader.LoadParam("traj_opt/boundary/min_acc_thr", min_acc_thr, -1.0);
             loader.LoadParam("traj_opt/boundary/penna_margin", penna_margin, 0.05);
+            loader.LoadParam("traj_opt/boundary/constraint_norm_type", constraint_norm_type, 0);
 
             loader.LoadParam("traj_opt" + ns + "penna_scale", penna_scale, -1.0);
             loader.LoadParam("traj_opt" + ns + "penna_t", penna_t, -1.0);
