@@ -24,8 +24,8 @@ super_planner:
   iris_iter_num: 2
   obs_skip_num: 2
   replan_forward_dt: 0.1
-  planning_horizon: 10.0
-  sensing_horizon: 15.0
+  planning_horizon: 7.0
+  sensing_horizon: -1
   receding_dis: 4.0
   robot_r: 0.2
   yaw_dot_max: 3.0

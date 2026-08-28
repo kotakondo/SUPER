@@ -46,6 +46,7 @@ RUN sudo apt-get install -y libncurses-dev
 RUN sudo apt-get install -y ros-${ROS_DISTRO}-rqt-graph
 RUN sudo apt-get install -y libignition-math4-dev
 RUN sudo apt install -y cmake
+RUN sudo apt-get install -y ffmpeg xvfb
                             
 RUN ln -s /usr/include/eigen3/Eigen /usr/include/Eigen
 RUN python3 -m pip install pyquaternion pandas matplotlib

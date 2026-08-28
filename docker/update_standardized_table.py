@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Update the SUPER row in the standardized benchmark LaTeX table.
+Update the SUPER rows in the standardized benchmark LaTeX table.
 
-Reads the super_benchmark.csv produced by local_traj_benchmark and updates
-the SUPER row in the existing LaTeX table file.
+Reads two CSVs (L2 and L-inf) produced by local_traj_benchmark and updates
+the two SUPER rows in the existing LaTeX table file.
 
 Usage:
     python3 update_standardized_table.py \
-        --csv /path/to/super_benchmark.csv \
+        --csv-l2 /path/to/super_l2_benchmark.csv \
+        --csv-linf /path/to/super_linf_benchmark.csv \
         --latex-path /path/to/standardized_benchmark.tex
 """
 
@@ -86,15 +87,19 @@ def fmt(val, decimals=1):
     return f"{val:.{decimals}f}"
 
 
-def build_super_row(stats):
-    """Build the SUPER row LaTeX string.
+def build_super_row(stats, norm_label, is_first_row=True):
+    """Build a SUPER row LaTeX string.
 
-    SUPER uses a single optimization call, so per_opt == total_opt.
-    We merge them with \\multicolumn{2}{c}{value}.
+    Args:
+        stats: dict of computed statistics
+        norm_label: LaTeX string for the norm column, e.g. "$L_2$" or "$L_\\infty$"
+        is_first_row: if True, emit \\multirow{2}{*}{SUPER} and \\multirow{2}{*}{multi}
     """
+    algo = "\\multirow{2}{*}{SUPER}" if is_first_row else ""
+    thread = "\\multirow{2}{*}{multi}" if is_first_row else ""
     opt_time = fmt(stats["per_opt_ms"])
     row = (
-        f"      SUPER & multi & -- "
+        f"      {algo} & {thread} & {norm_label} "
         f"& {fmt(stats['success_rate'])} "
         f"& \\multicolumn{{2}}{{c}}{{{opt_time}}} "
         f"& {fmt(stats['trav_time_s'])} "
@@ -108,62 +113,78 @@ def build_super_row(stats):
     return row
 
 
-def update_table(latex_path, new_row):
-    """Find and replace the SUPER row in the LaTeX table."""
+def update_table(latex_path, l2_row, linf_row):
+    """Find and replace the two SUPER rows in the LaTeX table."""
     with open(latex_path, "r") as f:
         lines = f.readlines()
 
-    found = False
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        # Match line starting with "SUPER" (possibly with \best/\worst wrappers)
-        if re.match(r"^\s*SUPER\s*&", line):
-            lines[i] = new_row + "\n"
-            found = True
-            break
+    # Find the L2 row (first SUPER row): matches \multirow{2}{*}{SUPER} or lines with SUPER.*L_2
+    l2_found = False
+    linf_found = False
 
-    if not found:
-        print(f"ERROR: Could not find SUPER row in {latex_path}")
+    for i, line in enumerate(lines):
+        # Match L2 row: contains "SUPER" and "L_2"
+        if re.search(r"SUPER.*L_2", line) or re.search(r"\\multirow\{2\}\{\*\}\{SUPER\}.*L_2", line):
+            lines[i] = l2_row + "\n"
+            l2_found = True
+        # Match L-inf row: contains "L_\\infty" or "L_\infty"
+        elif re.search(r"L_\\\\infty|L_\\infty", line) and not re.search(r"(FASTER|DYNUS)", line):
+            lines[i] = linf_row + "\n"
+            linf_found = True
+
+    if not l2_found or not linf_found:
+        print(f"ERROR: Could not find SUPER rows in {latex_path}")
+        print(f"  L2 row found: {l2_found}, L-inf row found: {linf_found}")
         sys.exit(1)
 
     with open(latex_path, "w") as f:
         f.writelines(lines)
 
-    print(f"Updated SUPER row in {latex_path}")
+    print(f"Updated SUPER rows (L2 + L-inf) in {latex_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Update SUPER row in standardized benchmark table")
-    parser.add_argument("--csv", required=True, help="Path to super_benchmark.csv")
+    parser = argparse.ArgumentParser(description="Update SUPER rows in standardized benchmark table")
+    parser.add_argument("--csv-l2", required=True, help="Path to super_l2_benchmark.csv")
+    parser.add_argument("--csv-linf", required=True, help="Path to super_linf_benchmark.csv")
     parser.add_argument("--latex-path", required=True, help="Path to standardized_benchmark.tex")
     args = parser.parse_args()
 
-    if not os.path.exists(args.csv):
-        print(f"ERROR: CSV not found: {args.csv}")
-        sys.exit(1)
+    for path, label in [(args.csv_l2, "L2 CSV"), (args.csv_linf, "L-inf CSV")]:
+        if not os.path.exists(path):
+            print(f"ERROR: {label} not found: {path}")
+            sys.exit(1)
 
     if not os.path.exists(args.latex_path):
         print(f"ERROR: LaTeX file not found: {args.latex_path}")
         sys.exit(1)
 
-    stats = compute_stats(args.csv)
+    # Compute stats for each norm
+    l2_stats = compute_stats(args.csv_l2)
+    linf_stats = compute_stats(args.csv_linf)
 
-    print("=== SUPER Standardized Benchmark Stats ===")
-    print(f"  Success rate:    {fmt(stats['success_rate'])}%")
-    print(f"  Per-opt time:    {fmt(stats['per_opt_ms'])} ms")
-    print(f"  Total-opt time:  {fmt(stats['total_opt_ms'])} ms")
-    print(f"  Travel time:     {fmt(stats['trav_time_s'])} s")
-    print(f"  Path length:     {fmt(stats['path_length_m'])} m")
-    print(f"  Jerk smoothness: {fmt(stats['jerk_smoothness'])} m/s^2")
-    print(f"  Corridor viol:   {fmt(stats['corridor_viol_pct'])}%")
-    print(f"  Vel viol:        {fmt(stats['vel_viol_pct'])}%")
-    print(f"  Acc viol:        {fmt(stats['acc_viol_pct'])}%")
-    print(f"  Jerk viol:       {fmt(stats['jerk_viol_pct'])}%")
+    for label, stats in [("L2", l2_stats), ("L-inf", linf_stats)]:
+        print(f"\n=== SUPER Standardized Benchmark Stats ({label}) ===")
+        print(f"  Success rate:    {fmt(stats['success_rate'])}%")
+        print(f"  Per-opt time:    {fmt(stats['per_opt_ms'])} ms")
+        print(f"  Total-opt time:  {fmt(stats['total_opt_ms'])} ms")
+        print(f"  Travel time:     {fmt(stats['trav_time_s'])} s")
+        print(f"  Path length:     {fmt(stats['path_length_m'])} m")
+        print(f"  Jerk smoothness: {fmt(stats['jerk_smoothness'])} m/s^2")
+        print(f"  Corridor viol:   {fmt(stats['corridor_viol_pct'])}%")
+        print(f"  Vel viol:        {fmt(stats['vel_viol_pct'])}%")
+        print(f"  Acc viol:        {fmt(stats['acc_viol_pct'])}%")
+        print(f"  Jerk viol:       {fmt(stats['jerk_viol_pct'])}%")
 
-    new_row = build_super_row(stats)
-    print(f"\nNew row:\n  {new_row}")
+    # Build row strings
+    l2_row = build_super_row(l2_stats, "$L_2$", is_first_row=True)
+    linf_row = build_super_row(linf_stats, "$L_\\infty$", is_first_row=False)
 
-    update_table(args.latex_path, new_row)
+    print(f"\nNew rows:")
+    print(f"  {l2_row}")
+    print(f"  {linf_row}")
+
+    update_table(args.latex_path, l2_row, linf_row)
 
 
 if __name__ == "__main__":

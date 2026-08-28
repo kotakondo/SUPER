@@ -253,12 +253,57 @@ static ConstraintReport analyzeTrajectory(
     return rep;
 }
 
+// ======================== Trajectory dump ========================
+
+static void dumpTrajectory(const Trajectory& traj,
+                           const std::string& dump_dir,
+                           const std::string& case_filename,
+                           double dc = 0.01)
+{
+    fs::path dir(dump_dir);
+    fs::create_directories(dir);
+
+    // Replace .mysco2 extension with .csv
+    std::string out_name = fs::path(case_filename).stem().string() + ".csv";
+    fs::path out_path = dir / out_name;
+
+    std::ofstream ofs(out_path);
+    if (!ofs) {
+        std::cerr << "WARNING: could not open " << out_path << " for writing\n";
+        return;
+    }
+
+    ofs << "t,px,py,pz,vx,vy,vz,ax,ay,az,jx,jy,jz\n";
+
+    double T = traj.getTotalDuration();
+    int num_samples = static_cast<int>(std::ceil(T / dc)) + 1;
+
+    ofs << std::setprecision(9);
+    for (int k = 0; k < num_samples; ++k) {
+        double t = std::min(static_cast<double>(k) * dc, T);
+        Eigen::Vector3d pos = traj.getPos(t);
+        Eigen::Vector3d vel = traj.getVel(t);
+        Eigen::Vector3d acc = traj.getAcc(t);
+        Eigen::Vector3d jer = traj.getJer(t);
+
+        ofs << t
+            << "," << pos.x() << "," << pos.y() << "," << pos.z()
+            << "," << vel.x() << "," << vel.y() << "," << vel.z()
+            << "," << acc.x() << "," << acc.y() << "," << acc.z()
+            << "," << jer.x() << "," << jer.y() << "," << jer.z()
+            << "\n";
+    }
+
+    ofs.flush();
+}
+
 // ======================== CLI argument parsing ========================
 
 struct BenchArgs {
     std::string sfc_dir = "/home/kkondo/code/dynus_ws/src/dynus/data";
     std::string config = "";
     std::string output_csv = "/home/kkondo/code/dynus_ws/src/dynus/benchmark_data/default/super_benchmark.csv";
+    std::string dump_dir = "";  // empty = no dump
     double v_max = 1.0;
     double a_max = 2.0;
     double j_max = 3.0;
@@ -278,6 +323,7 @@ static BenchArgs parseArgs(int argc, char** argv) {
         else if (arg == "--v_max" && i + 1 < argc)    args.v_max = std::stod(argv[++i]);
         else if (arg == "--a_max" && i + 1 < argc)    args.a_max = std::stod(argv[++i]);
         else if (arg == "--j_max" && i + 1 < argc)    args.j_max = std::stod(argv[++i]);
+        else if (arg == "--dump_dir" && i + 1 < argc) args.dump_dir = argv[++i];
         else if (arg == "--help" || arg == "-h") {
             std::cout << "Usage: local_traj_benchmark [options]\n"
                       << "  --sfc_dir DIR       Path to .mysco2 files\n"
@@ -285,7 +331,8 @@ static BenchArgs parseArgs(int argc, char** argv) {
                       << "  --output_csv FILE   Output CSV path\n"
                       << "  --v_max VALUE       Max velocity for analysis\n"
                       << "  --a_max VALUE       Max acceleration for analysis\n"
-                      << "  --j_max VALUE       Max jerk for analysis\n";
+                      << "  --j_max VALUE       Max jerk for analysis\n"
+                      << "  --dump_dir DIR      Dump per-case trajectory CSVs to DIR\n";
             std::exit(0);
         }
     }
@@ -493,6 +540,11 @@ int main(int argc, char** argv) {
                 r.a_max_observed = rep.a_max_observed;
                 r.j_violation_pct = rep.j_violation_pct;
                 r.j_max_observed = rep.j_max_observed;
+
+                // Dump trajectory samples if requested
+                if (!args.dump_dir.empty()) {
+                    dumpTrajectory(out_traj, args.dump_dir, fname);
+                }
 
                 std::cout << "[" << case_idx + 1 << "/" << files.size() << "] "
                           << fname << ": OK  "

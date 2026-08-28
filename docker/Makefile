@@ -1,6 +1,7 @@
 .PHONY: build build-no-cache run run-benchmark analyze-benchmark shell \
        run-standardized-benchmark analyze-standardized-benchmark \
-       run-static-benchmark analyze-static-benchmark
+       run-static-benchmark analyze-static-benchmark \
+       record-video record-video-headless replay-bag
 
 # Default number of benchmark trials
 NUM_TRIALS ?= 10
@@ -214,48 +215,150 @@ analyze-static-benchmark:
 # Host paths for dynus data
 DYNUS_ROOT := /home/kkondo/code/dynus_ws/src/dynus
 SFC_DIR := $(DYNUS_ROOT)/data
-BENCHMARK_DATA_DIR := $(DYNUS_ROOT)/benchmark_data
 PAPER_DIR := /home/kkondo/paper_writing
 
+# Output directory for standardized benchmark CSVs (inside SUPER repo, gitignored)
+STD_BENCH_DIR := $(SUPER_ROOT)/data/standardized_benchmark
+
 # Run SUPER trajectory optimizer on all .mysco2 corridor files
-# Builds inside Docker, runs the benchmark, writes CSV output
+# Builds inside Docker, runs the benchmark with both L2 and L-inf norms
 # Usage: make run-standardized-benchmark
 run-standardized-benchmark:
-	@echo "=== SUPER Standardized Benchmark ==="
+	@mkdir -p $(STD_BENCH_DIR)
+	@echo "=== SUPER Standardized Benchmark (L2 + L-inf) ==="
 	@echo "  SFC data:   $(SFC_DIR)"
-	@echo "  Output CSV: $(BENCHMARK_DATA_DIR)/default/super_benchmark.csv"
+	@echo "  Output CSVs: $(STD_BENCH_DIR)/super_l2_benchmark.csv"
+	@echo "               $(STD_BENCH_DIR)/super_linf_benchmark.csv"
 	@echo ""
 	docker run -it \
 		$(DOCKER_FLAGS) \
 		-v $(SUPER_ROOT):/home/kota/super_ws/src/SUPER:rw \
 		-v $(SFC_DIR):/home/kota/dynus_data:ro \
-		-v $(BENCHMARK_DATA_DIR):/home/kota/benchmark_output:rw \
 		--rm super \
 		/bin/bash -c "\
 			$(SETUP_CMD) && \
+			echo '--- Running L2 norm benchmark ---' && \
+			devel/lib/super_planner/local_traj_benchmark \
+				--sfc_dir /home/kota/dynus_data \
+				--config src/SUPER/super_planner/config/benchmark_l2.yaml \
+				--output_csv src/SUPER/data/standardized_benchmark/super_l2_benchmark.csv \
+				--dump_dir src/SUPER/data/standardized_benchmark/traj_l2 && \
+			echo '--- Running L-inf norm benchmark ---' && \
 			devel/lib/super_planner/local_traj_benchmark \
 				--sfc_dir /home/kota/dynus_data \
 				--config src/SUPER/super_planner/config/benchmark.yaml \
-				--output_csv /home/kota/benchmark_output/default/super_benchmark.csv"
+				--output_csv src/SUPER/data/standardized_benchmark/super_linf_benchmark.csv \
+				--dump_dir src/SUPER/data/standardized_benchmark/traj_linf"
 	@echo ""
-	@echo "Benchmark complete. CSV written to:"
-	@echo "  $(BENCHMARK_DATA_DIR)/default/super_benchmark.csv"
+	@echo "Benchmark complete. CSVs written to:"
+	@echo "  $(STD_BENCH_DIR)/super_l2_benchmark.csv"
+	@echo "  $(STD_BENCH_DIR)/super_linf_benchmark.csv"
 	@echo ""
 	@echo "Next: make analyze-standardized-benchmark"
 
-# Analyze benchmark CSV and update the SUPER row in the LaTeX table
+# Analyze benchmark CSVs and update the SUPER rows in the LaTeX table
 # Runs on the host (no Docker needed, no extra dependencies)
 # Usage: make analyze-standardized-benchmark
 analyze-standardized-benchmark:
 	@echo "=== Analyzing Standardized Benchmark ==="
-	@if [ ! -f "$(BENCHMARK_DATA_DIR)/default/super_benchmark.csv" ]; then \
-		echo "ERROR: super_benchmark.csv not found."; \
+	@if [ ! -f "$(STD_BENCH_DIR)/super_l2_benchmark.csv" ]; then \
+		echo "ERROR: super_l2_benchmark.csv not found."; \
+		echo "Run 'make run-standardized-benchmark' first."; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(STD_BENCH_DIR)/super_linf_benchmark.csv" ]; then \
+		echo "ERROR: super_linf_benchmark.csv not found."; \
 		echo "Run 'make run-standardized-benchmark' first."; \
 		exit 1; \
 	fi
 	python3 $(SUPER_ROOT)/docker/update_standardized_table.py \
-		--csv $(BENCHMARK_DATA_DIR)/default/super_benchmark.csv \
+		--csv-l2 $(STD_BENCH_DIR)/super_l2_benchmark.csv \
+		--csv-linf $(STD_BENCH_DIR)/super_linf_benchmark.csv \
 		--latex-path $(PAPER_DIR)/DYNUS_v3/tables/standardized_benchmark.tex
 	@echo ""
 	@echo "LaTeX table updated at:"
 	@echo "  $(PAPER_DIR)/DYNUS_v3/tables/standardized_benchmark.tex"
+
+# ============================================================================
+# Video recording: run SUPER in hard_forest and capture rviz as MP4
+# ============================================================================
+
+# Duration in seconds (default 60)
+VIDEO_DURATION ?= 60
+
+# Record video with GUI (requires X11 display)
+# Usage: make record-video [VIDEO_DURATION=60]
+# Output: SUPER/data/video/<TIMESTAMP>/super_hard_forest_*.{bag,mp4}
+record-video:
+	@mkdir -p ../data/video/$(TIMESTAMP)
+	@echo "=== SUPER Video Recording (hard_forest, GUI mode) ==="
+	@echo "  Duration: $(VIDEO_DURATION)s"
+	@echo "  Output:   SUPER/data/video/$(TIMESTAMP)/"
+	@echo ""
+	docker run -it \
+		$(DOCKER_FLAGS) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+		-v $(SUPER_ROOT):/home/kota/super_ws/src/SUPER:rw \
+		-v $(SUPER_ROOT)/data/video/$(TIMESTAMP):/home/kota/data \
+		--rm super \
+		/bin/bash -c "\
+			$(SETUP_CMD) && \
+			bash src/SUPER/docker/record_video.sh \
+				--duration $(VIDEO_DURATION) \
+				--output-dir /home/kota/data"
+	@echo ""
+	@echo "Recording complete. Files saved to:"
+	@echo "  SUPER/data/video/$(TIMESTAMP)/"
+	@ls -lh ../data/video/$(TIMESTAMP)/ 2>/dev/null || true
+
+# Record video in headless mode (no display needed, uses Xvfb)
+# Usage: make record-video-headless [VIDEO_DURATION=60]
+record-video-headless:
+	@mkdir -p ../data/video/$(TIMESTAMP)
+	@echo "=== SUPER Video Recording (hard_forest, headless) ==="
+	@echo "  Duration: $(VIDEO_DURATION)s"
+	@echo "  Output:   SUPER/data/video/$(TIMESTAMP)/"
+	@echo ""
+	docker run -it \
+		$(DOCKER_FLAGS) \
+		-v $(SUPER_ROOT):/home/kota/super_ws/src/SUPER:rw \
+		-v $(SUPER_ROOT)/data/video/$(TIMESTAMP):/home/kota/data \
+		--rm super \
+		/bin/bash -c "\
+			apt-get update -qq && apt-get install -y -qq xvfb ffmpeg > /dev/null 2>&1 && \
+			$(SETUP_CMD) && \
+			bash src/SUPER/docker/record_video.sh \
+				--headless \
+				--duration $(VIDEO_DURATION) \
+				--output-dir /home/kota/data"
+	@echo ""
+	@echo "Recording complete. Files saved to:"
+	@echo "  SUPER/data/video/$(TIMESTAMP)/"
+	@ls -lh ../data/video/$(TIMESTAMP)/ 2>/dev/null || true
+
+# Replay an existing rosbag with rviz (for re-recording video or visualization)
+# Usage: make replay-bag BAG_FILE=data/video/20260316_120000/super_hard_forest_20260316_120000.bag
+replay-bag:
+	@if [ -z "$(BAG_FILE)" ]; then \
+		echo "ERROR: BAG_FILE is required"; \
+		echo "Usage: make replay-bag BAG_FILE=path/to/file.bag"; \
+		echo ""; \
+		echo "Available bags:"; \
+		find ../data -name "*.bag" 2>/dev/null | head -20 || echo "  (none found)"; \
+		exit 1; \
+	fi
+	@echo "=== Replaying rosbag with rviz ==="
+	docker run -it \
+		$(DOCKER_FLAGS) \
+		-v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+		-v $(SUPER_ROOT):/home/kota/super_ws/src/SUPER:rw \
+		-v $(realpath $(BAG_FILE)):/home/kota/replay.bag:ro \
+		--rm super \
+		/bin/bash -c "\
+			$(SETUP_CMD) && \
+			(roscore &) && sleep 3 && \
+			rviz -d src/SUPER/mars_uav_sim/perfect_drone_sim/rviz/benchmark.rviz & \
+			sleep 3 && \
+			rosbag play /home/kota/replay.bag --clock && \
+			echo 'Playback complete. Press Ctrl+C to exit.' && \
+			wait"
